@@ -12,48 +12,60 @@ dayjs.extend(dayOfYear);
 
 const data = weather.map((v, i) => ({...v, idx: i, time: dayjs().dayOfYear(i).toString()}));
 
-function VegaLiteComponent(props) {
-  const chartRef = React.createRef()
+class VegaLiteComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      chartRef: React.createRef()
+    }
+  }
 
-  console.log(props.data)
+  componentDidMount() {
+    vl.register(vega, vegaLite, {});
 
-  React.useEffect(() => {
-    vl.register(vega, vegaLite, {})
+    // why do I have to pass props and state into this async function?
+    // why aren't they accessible via parent scope?
+    async function buildChart (data, chartRef) {
+      const selection = vl.selectInterval().encodings('y');
 
-    const minTemp = vl
-      .markPoint({stroke: "#85C5A6"})
-      .encode(
-        vl.x().fieldT("time").axis({title: "Day of the year", format: '%B'}),
-        vl.y().fieldQ("MinTemp").axis({title: "MinTemp", titleColor: "#85C5A6"}),
-        vl.tooltip().fieldQ("MinTemp"),
-      );
+      const tempCounts = vl.markBar()
+        .params(selection)
+        .encode(
+          vl.x().count(),
+          vl.y().fieldQ("MaxTemp").bin(true).axis({title: "Temperature (Celsius)"}),
+          vl.tooltip(vl.x().count())
+        )
+        .width(200);
 
-    const maxTemp = vl
-      .markPoint({stroke: "#85A9C5"})
-      .encode(
-        vl.x().fieldT("time").axis({title: "Day of the year", format: '%B'}),
-        vl.y().fieldQ("MaxTemp").axis({title: "MaxTemp", titleColor: "#85A9C5"}),
-        vl.tooltip().fieldQ("MaxTemp"),
-      );
+      const temps = vl.markPoint({filled: true, opacity: 0.4, size: 40})
+        .params(selection)
+        .encode(
+          vl.x().fieldT("time").axis({title: null, format: '%B'}),
+          vl.y().fieldQ("MaxTemp").axis({title: "Temperature (Celsius)"}),
+          vl.tooltip().fieldQ("MaxTemp"),
+          vl.color().if(selection, vl.fieldN('RainToday')).value('grey')
+        );
 
-    vl.layer(minTemp, maxTemp)
-      .data({
-        values: props.data
-      })
-      // .width("container")
-      .width(400)
-      .render()
-      .then(chart => {
-        chartRef.current
-          .appendChild(chart)
-      })
-  })
-  return (
-    <React.Fragment>
-      <div ref={chartRef} style={({width: '100%'})}/>
-      {/*<pre>{JSON.stringify(plot.toObject(), 0, 2)}</pre>*/}
-    </React.Fragment>
-  )
+      await vl.hconcat(temps, tempCounts)
+        .data(data)
+        .render()
+        .then(chart => {
+          chartRef.current
+            .appendChild(chart)
+        });
+
+    }
+    buildChart({values: this.props.data}, this.state.chartRef);
+  }
+
+  render() {
+    return (
+      <React.Fragment>
+        <div ref={this.state.chartRef} style={({width: '100%'})}/>
+        {/*<pre>{JSON.stringify(plot.toObject(), 0, 2)}</pre>*/}
+      </React.Fragment>
+    )
+  }
 }
 
 export function App() {
