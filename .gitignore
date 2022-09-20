@@ -1,0 +1,7 @@
+.parcel-cache
+.idea
+node_modules
+dist
+yarn.lock
+yarn-error.log
+weather.csv
