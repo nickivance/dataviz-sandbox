@@ -12,33 +12,6 @@ dayjs.extend(dayOfYear);
 
 const data = weather.map((v, i) => ({...v, idx: i, time: dayjs().dayOfYear(i).toString()}));
 
-// region Normalization
-
-// -2 to 12
-// 0.3 to 2
-// 5 to 48
-// 48 - 5 = 43
-// 12/43
-
-const ex1 = [0, 1, 40, 43];
-const ex2 = [0, 1, 5, 100];
-const ex3 = [-2, 0, 2, 98];
-const ex4 = [0.3, 0.5, 1];
-
-const normalize = (arr, low, high) => {
-  const minv = min(arr)
-  const maxv = max(arr)
-  const range = maxv - minv
-  return arr.map((v) => v/range);
-}
-
-console.log(ex1, normalize(ex1))
-console.log(ex2, normalize(ex2))
-console.log(ex3, normalize(ex3))
-console.log(ex4, normalize(ex4))
-
-// endregion
-
 function VegaLiteComponent(props) {
   const chartRef = React.createRef()
 
@@ -90,7 +63,6 @@ export function App() {
   const handleKeyChange = (e) => {
     setSelectedKey(e.target.value)
   }
-  const tickLength = 10;
 
   return (
     <div>
@@ -103,12 +75,6 @@ export function App() {
       <ul>
         {keys.map((k) => (<li key={k}>{k}</li>))}
       </ul>
-      {/*<svg width='500px' height='400px'>*/}
-      {/*  <line x1={tickLength} y1="0" x2={tickLength} y2="100%" stroke='black' strokeWidth='2'/>*/}
-      {/*  <svg width='100%' height='100%'>*/}
-      {/*    {dataByKey[selectedKey].map((v, i) => (<circle key={i} r='5' cx={i} cy={v}></circle>))}*/}
-      {/*  </svg>*/}
-      {/*</svg>*/}
     </div>
   );
 }
