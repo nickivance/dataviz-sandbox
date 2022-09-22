@@ -27,6 +27,7 @@ class VegaLiteComponent extends React.Component {
     // why aren't they accessible via parent scope?
     async function buildChart (data, chartRef) {
       const selection = vl.selectInterval().encodings('y');
+      const hovered = vl.selectPoint('selected').on('mouseover')
 
       const tempCounts = vl.markBar()
         .params(selection)
@@ -38,12 +39,13 @@ class VegaLiteComponent extends React.Component {
         .width(200);
 
       const temps = vl.markPoint({filled: true, opacity: 0.4, size: 40})
-        .params(selection)
+        .params(hovered, selection)
         .encode(
           vl.x().fieldT("time").axis({title: null, format: '%B'}),
           vl.y().fieldQ("MaxTemp").axis({title: "Temperature (Celsius)"}),
           vl.tooltip().fieldQ("MaxTemp"),
-          vl.color().if(selection, vl.fieldN('RainToday')).value('grey')
+          vl.color().if(selection, vl.fieldN('RainToday')).value('grey'),
+          vl.size({condition: {param: 'selected', value: 200, empty: false}, value: 40})
         );
 
       await vl.hconcat(temps, tempCounts)
