@@ -48,12 +48,15 @@ class VegaLiteComponent extends React.Component {
           vl.size({condition: {param: 'selected', value: 200, empty: false}, value: 40})
         );
 
-      await vl.hconcat(temps, tempCounts)
+      const plot = vl.hconcat(temps, tempCounts);
+
+      console.log(JSON.stringify(plot.toObject(), 0, 2));
+
+      await plot
         .data(data)
         .render()
         .then(chart => {
-          chartRef.current
-            .appendChild(chart)
+          chartRef.current.appendChild(chart);
         });
 
     }
@@ -64,7 +67,6 @@ class VegaLiteComponent extends React.Component {
     return (
       <React.Fragment>
         <div ref={this.state.chartRef} style={({width: '100%'})}/>
-        {/*<pre>{JSON.stringify(plot.toObject(), 0, 2)}</pre>*/}
       </React.Fragment>
     )
   }
