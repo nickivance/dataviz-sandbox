@@ -12,12 +12,10 @@ dayjs.extend(dayOfYear);
 
 const data = weather.map((v, i) => ({...v, idx: i, time: dayjs().dayOfYear(i).toString()}));
 
-class VegaLiteComponent extends React.Component {
+class ExampleOneComponent extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      chartRef: React.createRef()
-    }
+    this.state = { chartRef: React.createRef() }
   }
 
   componentDidMount() {
@@ -72,6 +70,59 @@ class VegaLiteComponent extends React.Component {
   }
 }
 
+class ExampleTwoComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { chartRef: React.createRef() }
+  }
+
+  componentDidMount() {
+    vl.register(vega, vegaLite, {});
+
+    async function buildChart (data, chartRef) {
+      const brush = vl.selectInterval().resolve('global');
+      const legend = vl.selectPoint().fields('RainToday').bind('legend');
+      const hover = vl.selectPoint('selected').on('mouseover');
+      const brushAndLegend = vl.and(brush, legend);
+
+      const plot = vl.markCircle({tooltip: true})
+        .params(brush, legend, hover)
+        .encode(
+          vl.x().fieldQ(vl.repeat('column')),
+          vl.y().fieldQ(vl.repeat('row')),
+          vl.color().if(brushAndLegend, vl.fieldN('RainToday')).value('grey'),
+          vl.opacity().if(brushAndLegend, vl.value(0.8)).value(0.1),
+          vl.size({condition: {param: 'selected', value: 100, empty: false}}).value(20)
+        )
+        .width(140)
+        .height(140)
+        .repeat({
+          column: ['Rainfall', 'Sunshine'],
+          row: ['MaxTemp', 'MinTemp']
+        });
+
+      console.log(JSON.stringify(plot.toObject(), 0, 2));
+
+      await plot
+        .data(data)
+        .render({renderer: 'svg'})
+        .then(chart => {
+          chartRef.current.appendChild(chart);
+        });
+
+    }
+    buildChart({values: this.props.data}, this.state.chartRef);
+  }
+
+  render() {
+    return (
+      <React.Fragment>
+        <div ref={this.state.chartRef} style={({width: '100%'})}/>
+      </React.Fragment>
+    )
+  }
+}
+
 export function App() {
   const keys = Object.keys(data[0]);
   const [selectedKey, setSelectedKey] = useState(keys[0]);
@@ -86,7 +137,8 @@ export function App() {
       <p><strong>Dataset size: </strong>{data.length}</p>
       <p>Distribution of: <select value={selectedKey} onChange={handleKeyChange}>{keys.map((k) => (<option key={k}>{k}</option>))}</select></p>
       <p>Range: {min(dataByKey[selectedKey])} - {max(dataByKey[selectedKey])}</p>
-      <VegaLiteComponent data={data}/>
+      <ExampleOneComponent data={data}/>
+      <ExampleTwoComponent data={data}/>
       <p><strong>Datum keys: </strong></p>
       <ul>
         {keys.map((k) => (<li key={k}>{k}</li>))}
